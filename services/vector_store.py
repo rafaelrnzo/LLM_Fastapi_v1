@@ -52,8 +52,6 @@ class VectorStoreService:
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error retrieving ChromaDB collections: {e}")
 
-
-# Singleton instance agar tidak membuat instance baru setiap kali dipanggil
 vector_store_service = VectorStoreService()
 
 def get_vector_store():
