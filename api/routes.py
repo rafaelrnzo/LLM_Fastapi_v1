@@ -9,7 +9,7 @@ from services.vector_store import get_vector_store
 from services.document_processor import DocumentProcessor
 import os
 import shutil
-
+from config import settings
 
 router = APIRouter()
 vector_service = VectorStoreService()
@@ -25,7 +25,9 @@ doc_processor = DocumentProcessor(vector_service)
 @router.post("/prompt-json")
 def rag_chain_json(request: QueryRequest):
     try:
-        docs = vector_service.retrieve_docs(request.question)
+        collection_name = request.collection_name 
+        
+        docs = vector_service.retrieve_docs(request.question, collection_name)
         formatted_context = vector_service.combine_docs(docs)
         
         is_mcq = any(keyword in request.question.lower() 
@@ -39,6 +41,7 @@ def rag_chain_json(request: QueryRequest):
         return JSONResponse(content={
             "status": "success",
             "query": request.question,
+            "collection_name": collection_name,
             "response": json_response,
             "metadata": {
                 "model": llm_service.model,
@@ -53,9 +56,11 @@ def rag_chain_json(request: QueryRequest):
             content={
                 "status": "error",
                 "message": str(e),
-                "query": request.question
+                "query": request.question,
+                "collection_name": request.collection_name
             }
         )
+
 
 @router.post("/prompt-essay")
 def rag_chain_essay(request: QueryRequest):

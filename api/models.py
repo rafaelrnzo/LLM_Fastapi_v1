@@ -1,7 +1,9 @@
+from typing import Optional
 from pydantic import BaseModel
 
 class QueryRequest(BaseModel):
     question: str
+    collection_name: Optional[str] = None
 
 class PDFUploadRequest(BaseModel):
     file_path: str

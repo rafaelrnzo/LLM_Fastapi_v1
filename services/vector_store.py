@@ -7,28 +7,37 @@ from fastapi import HTTPException
 
 class VectorStoreService:
     def __init__(self):
-        self.chroma_client = chromadb.HttpClient(
-            host=settings.CHROMA_HOST, 
-            port=settings.CHROMA_PORT, 
-            settings=ChromaSettings()
-        )
-        self.embedding_function = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
-        
-    def get_vectorstore(self, collection_name: str = None):
+        try:
+            self.chroma_client = chromadb.HttpClient(
+                host=settings.CHROMA_HOST,
+                port=settings.CHROMA_PORT,
+                settings=ChromaSettings()
+            )
+            self.embedding_function = SentenceTransformerEmbeddings(model_name="all-MiniLM-L6-v2")
+        except Exception as e:
+            raise RuntimeError(f"Failed to connect to ChromaDB: {e}")
+
+    def get_vectorstore(self, collection_name: str):
+        if not collection_name:
+            raise ValueError("Collection name must be provided")
+
         return Chroma(
             embedding_function=self.embedding_function,
-            collection_name=settings.CHROMA_COLLECTION_NAME,
+            collection_name=collection_name,
             client=self.chroma_client,
         )
 
-    def retrieve_docs(self, question, collection_name: str = None):
-        vectorstore = self.get_vectorstore(collection_name)
-        retriever = vectorstore.as_retriever()
-        return retriever.invoke(question)
+    def retrieve_docs(self, question: str, collection_name: str):
+        try:
+            vectorstore = self.get_vectorstore(collection_name)
+            retriever = vectorstore.as_retriever()
+            return retriever.invoke(question)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error retrieving documents: {e}")
 
     def combine_docs(self, docs):
         return "\n\n".join(doc.page_content for doc in docs)
-    
+
     def delete_collection(self, collection_name: str):
         try:
             self.chroma_client.delete_collection(name=collection_name)
@@ -38,10 +47,14 @@ class VectorStoreService:
 
     def get_collection_list(self):
         try:
-            collection_names = self.chroma_client.list_collections()
-            return {"collections": collection_names}  
+            collections = self.chroma_client.list_collections()
+            return {"collections": collections}
         except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Error when getting ChromaDB collection list: {e}")
+            raise HTTPException(status_code=500, detail=f"Error retrieving ChromaDB collections: {e}")
+
+
+# Singleton instance agar tidak membuat instance baru setiap kali dipanggil
+vector_store_service = VectorStoreService()
 
 def get_vector_store():
-    return VectorStoreService()
+    return vector_store_service
