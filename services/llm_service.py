@@ -10,20 +10,19 @@ class LLMService:
         ollama.base_url = settings.OLLAMA_HOST
         self.model = settings.OLLAMA_MODEL
     
-    @staticmethod
-    def format_mcq_prompt(question: str, context: str) -> str:
+    def format_mcq_prompt(self, question: str, context: str) -> str:
         return f"""Berdasarkan konteks berikut, buatkan soal pilihan ganda sesuai permintaan.
         Setiap soal HARUS memiliki pertanyaan yang lengkap (bukan hanya nomor).
         
         Format yang WAJIB diikuti untuk setiap soal:
         
         Soal [nomor]:
-        [Tulis pertanyaan lengkap di sini (WAJIB)]
+        [Tulis pertanyaan lengkap disini (WAJIB)]
         A) [pilihan A]
         B) [pilihan B]
         C) [pilihan C]
         D) [pilihan D]
-        Jawaban: [A/B/C/D] (Jawaban benar harus tersebar secara acak, tidak boleh hanya di A atau B)
+        Jawaban: [A/B/C/D]
         
         Contoh format yang benar:
         Soal 1:
@@ -34,25 +33,14 @@ class LLMService:
         D) Menghentikan aliran
         Jawaban: A
         
-        Soal 2:
-        Apa yang dimaksud dengan titik didih dalam ilmu fisika?
-        A) Titik di mana cairan membeku
-        B) Titik di mana cairan menguap menjadi gas
-        C) Titik di mana zat padat mencair
-        D) Titik di mana gas berubah menjadi cair
-        Jawaban: B
-        
         Perhatikan bahwa setiap soal HARUS memiliki:
-        1. Pertanyaan lengkap (bukan hanya nomor).
-        2. Empat pilihan jawaban (A, B, C, D).
-        3. **Jawaban benar harus tersebar di antara A, B, C, dan D, bukan hanya di A atau B.**
-        4. Pastikan tidak ada soal yang terduplifikasi.
-        5. Pastikan total soal yang dibuat sesuai dengan soal yang saya minta di prompt saya.
+        1. Pertanyaan lengkap (bukan hanya nomor)
+        2. Empat pilihan jawaban (A,B,C,D)
+        3. Satu jawaban yang benar
         
         Konteks: {context}
         
         Permintaan: {question}"""
-
 
     def format_essay_prompt(self, question: str, context: str) -> str:
         return f"""Berdasarkan konteks berikut, buatkan soal essay sesuai permintaan.
